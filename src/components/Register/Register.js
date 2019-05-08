@@ -2,7 +2,7 @@ import React , { Component } from 'react';
  import { ToastContainer, toast } from 'react-toastify';
   import 'react-toastify/dist/ReactToastify.css';
 const Swal = require('sweetalert2');
-
+ var Spinner = require('react-spinkit');
 
 
 class Register extends React.Component {
@@ -13,6 +13,22 @@ class Register extends React.Component {
       password: '',
       name: ''
     }
+  }
+
+  onClick(event) {
+      this.onShow();
+      this.onSubmitSignIn();
+      
+   }
+
+state = {
+    progrssBar: false
+  }
+
+  onShow = ()=> {
+    this.setState({
+      progrssBar: true
+    });
   }
 
   onNameChange = (event) => {
@@ -86,12 +102,13 @@ if (! toast.isActive(this.toastId)) {
                 type: 'success',
                 title: 'Account Created Successfully',
                 showConfirmButton: true,
-                timer: 4000,
+                timer: 2000,
               })                      }
       })
   }
 
   render() {
+    const progrssBar=this.state.progrssBar;
     return (
       <article className="br3 ba b--black-10 mv4 w-100 w-50-m w-25-l mw6 shadow-5 center">
         <main className="pa4 black-80">
@@ -131,11 +148,15 @@ if (! toast.isActive(this.toastId)) {
             </fieldset>
             <div className="">
               <input
-                onClick={this.onSubmitSignIn}
+                onClick={(event) => { this.onClick()}}
                 className="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f6 dib"
                 type="submit"
                 value="Register"
               />
+                <div>
+        {   progrssBar ?
+        (<Spinner name="ball-pulse-sync" color="aqua"/>):(<div></div>)
+      }</div>
               <ToastContainer />
             </div>
           </div>

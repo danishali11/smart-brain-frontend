@@ -7,7 +7,12 @@ import Signin from './components/Signin/Signin';
 import Register from './components/Register/Register';
 import Logo from './components/Logo/Logo';
 import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
+import ImageLinkFormCeleb from './components/ImageLinkFormCeleb/ImageLinkFormCeleb';
 import Rank from './components/Rank/Rank';
+import Celebrity from './components/Celebrity/Celebrity';
+import CelebName from './components/CelebName/CelebName';
+import Loading from 'react-loading-bar';
+import 'react-loading-bar/dist/index.css';
 import './App.css';
  import { ToastContainer, toast } from 'react-toastify';
   import 'react-toastify/dist/ReactToastify.css';
@@ -16,18 +21,6 @@ import './App.css';
 const app = new Clarifai.App({
  apiKey: '8d298d961968441b911a06d4da5eccc1'
 });
-
-// const particlesOptions = {
-//   particles: {
-//     number: {
-//       value: 100,
-//       density: {
-//         enable: true,
-//         value_area: 500
-//       }
-//     }
-//   }
-// }
 
 const particlesOptions = {
   
@@ -85,8 +78,14 @@ const particlesOptions = {
 const initialState={
 
       input: '',
+      inputCelebBox: '',
+      isVisible:false,
+      isFDVisible: false,
+      isImageVisible:false,
       imageUrl: '',
       box: {},
+      cName: '',
+     
       route: 'signin',
       isSignedIn: false,
       user: {
@@ -105,6 +104,12 @@ class App extends Component {
     }
  
 
+ _showMessage = (bool) => {
+    this.setState({
+      showMessage: bool
+    });
+  };
+
   loadUser = (data) => {
     this.setState({user: {
       id: data.id,
@@ -114,7 +119,21 @@ class App extends Component {
       joined: data.joined
     }})
   }
+    
 
+
+//   Retrieving Celeb Name From API Response
+    
+    generateName= (data) =>
+    {    
+         const celeb_name=data.outputs[0].data.regions[0].data.face.identity.concepts[0].name;
+
+         console.log(celeb_name);
+          return celeb_name;
+    }
+
+
+//    Retrieving Boundaries Of Detected Face
   calculateFaceLocation = (data) => {
     const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
     const image = document.getElementById('inputimage');
@@ -131,20 +150,36 @@ class App extends Component {
   displayFaceBox = (box) => {
     this.setState({box: box});
   }
+   
+
+
+    displayName = (cName) => {
+
+          this.setState({cName: cName});
+          console.log(cName);
+            }
+
 
   onInputChange = (event) => {
     this.setState({input: event.target.value});
   }
 
+  onInputChangeCeleb = (event) => {
+    this.setState({inputCelebBox: event.target.value});
+  }
+
   onButtonSubmit = () => {
     this.setState({imageUrl: this.state.input});
+    this.setState({isImageVisible:true});
     app.models
       .predict(
         Clarifai.FACE_DETECT_MODEL,
         this.state.input)
       .then(response => {
         if (response) {
-          fetch('https://salty-fjord-43449.herokuapp.com/image', {
+          console.log(response);
+         fetch('https://salty-fjord-43449.herokuapp.com/image', {
+
             method: 'put',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -153,17 +188,100 @@ class App extends Component {
           })
             .then(response => response.json())
             .then(count => {
+
               this.setState(Object.assign(this.state.user, { entries: count}))
             })
             .catch(console.log)
 
         }
-        this.displayFaceBox(this.calculateFaceLocation(response))
+         this.displayFaceBox(this.calculateFaceLocation(response))
+      
       })
       .catch(err => console.log(err));
   }
 
-  onRouteChange = (route) => {
+ onButtonSubmitCeleb = () => {
+    
+    this.setState({imageUrl: this.state.inputCelebBox});
+    this.setState({isImageVisible:true});
+    this.setState({box:{}});
+    
+    app.models
+      .predict(
+        "e466caa0619f444ab97497640cefc4dc",
+        this.state.inputCelebBox)
+      .then(response => {
+        if (response) {
+          console.log(response);
+         fetch('https://salty-fjord-43449.herokuapp.com/image', {
+
+            method: 'put',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              id: this.state.user.id
+            })
+          })
+            .then(response => response.json())
+            .then(count => {
+
+              this.setState(Object.assign(this.state.user, { entries: count}))
+            })
+            .catch(console.log)
+
+        }
+
+       this.displayName(this.generateName(response))
+
+      })
+      .catch(err => console.log(err));
+  }
+
+
+
+  onCelebCardSbmt= () =>
+   {
+if(this.onCelebCardSbmt )
+{
+
+  
+   this.setState({isImageVisible:false});
+
+  this.setState({
+      isVisible: true
+    });
+  this.setState({
+      isFDVisible: false
+    });
+  
+  }
+  }
+
+
+onFaceBtnSbmt= () =>
+   {
+     this.setState({
+      cName: ''
+    });
+     this.setState({isImageVisible:false});
+
+     this.setState({
+      inputimage: ''
+    });
+if(this.onFaceBtnSbmt )
+{
+  
+  this.setState({
+      isFDVisible: true
+    });
+  this.setState({
+      isVisible: false
+    });
+  
+  }
+  }
+
+
+ onRouteChange = (route) => {
     if (route === 'signout') {
       this.setState(initialState)
     } else if (route === 'home') {
@@ -173,8 +291,12 @@ class App extends Component {
   }
 
   render() {
-    const { isSignedIn, imageUrl, route, box } = this.state;
+    const { isSignedIn, imageUrl, route, box ,inputimage} = this.state;
+    const isVisible = this.state.isVisible;
+    const isFDVisible = this.state.isFDVisible;
+    const isImageVisible=this.state.isImageVisible;
     return (
+
       <div className="App">
          <Particles className='particles'
           params={particlesOptions}
@@ -183,16 +305,57 @@ class App extends Component {
         { route === 'home'
           ? <div>
               <Logo />
-              <Rank
+            
+                <Celebrity 
+                  onCelebCardSbmt={this.onCelebCardSbmt}
+                  onFaceBtnSbmt={this.onFaceBtnSbmt}
+           />
+            
+      
+             
+ {/*           <Rank
                 name={this.state.user.name}
                 entries={this.state.user.entries}
               />
-              <ImageLinkForm
+
+*/}
+
+              <CelebName 
+               cName={this.state.cName}
+               />
+              
+               <div>
+                {
+                  isFDVisible ? (<ImageLinkForm
                 onInputChange={this.onInputChange}
-                onButtonSubmit={this.onButtonSubmit}
-              />
-              <FaceRecognition box={box} imageUrl={imageUrl} />
-               <ToastContainer />
+               onButtonSubmit={this.onButtonSubmit}
+                />): 
+                (<div> </div>) 
+              
+                 }
+                </div>
+
+                <div>
+                {
+                  isVisible ? 
+                  (
+                    <ImageLinkFormCeleb 
+                 onInputChangeCeleb={this.onInputChangeCeleb}
+                 onButtonSubmitCeleb={this.onButtonSubmitCeleb}
+               /> )  :
+                (<div> </div>)
+              }
+          </div>
+              <div>
+              {
+                isImageVisible ?
+
+            (<FaceRecognition box={box} imageUrl={imageUrl} inputimage={inputimage} />)
+           :(<div> </div>)
+              }
+            </div>
+            <ToastContainer /> 
+            
             </div>
           : (
              route === 'signin'

@@ -1,6 +1,9 @@
 import React from 'react';
 import { ToastContainer, toast } from 'react-toastify';
   import 'react-toastify/dist/ReactToastify.css';
+  import Loading from 'react-loading-bar';
+import 'react-loading-bar/dist/index.css';
+   var Spinner = require('react-spinkit');
 
 class Signin extends React.Component {
   constructor(props) {
@@ -9,6 +12,23 @@ class Signin extends React.Component {
       signInEmail: '',
       signInPassword: ''
     }
+  }
+  onClick(event) {
+      this.onShow();
+      this.onSubmitSignIn();
+      
+   }
+
+
+
+state = {
+    progrssBar: false
+  }
+
+  onShow = ()=> {
+    this.setState({
+      progrssBar: true
+    });
   }
 
   onEmailChange = (event) => {
@@ -66,10 +86,13 @@ class Signin extends React.Component {
         }
       })
   }}
+  
 
   render() {
     const { onRouteChange } = this.props;
+     const progrssBar=this.state.progrssBar;
     return (
+
       <article className="br3 ba b--black-10 mv4 w-100 w-50-m w-25-l mw6 shadow-5 center">
         <main className="pa4 black-80">
           <div className="measure">
@@ -98,7 +121,7 @@ class Signin extends React.Component {
             </fieldset>
             <div className="">
               <input
-                onClick={this.onSubmitSignIn}
+                onClick={(event) => { this.onClick()}}
                 className="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f6 dib"
                 type="submit"
                 value="Sign in"
@@ -106,6 +129,11 @@ class Signin extends React.Component {
             </div>
             <div className="lh-copy mt3">
               <p  onClick={() => onRouteChange('register')} className="f6 link dim black db pointer">Register</p>
+              
+        <div>
+        {   progrssBar ?
+        (<Spinner name="ball-pulse-sync" color="aqua"/>):(<div></div>)
+      }</div>
               <ToastContainer />
             </div>
           </div>
